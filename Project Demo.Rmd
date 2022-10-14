@@ -1,0 +1,18 @@
+---
+title: "Project Demo"
+author: "Yiyang Shi"
+date: '2022-10-14'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(readr)
+library(survival)
+
+IBM_Attrition <- read.csv("https://raw.githubusercontent.com/yiyangshi-hub/STAT-453-Project/main/IBM_Attrition.csv")
+```
+
