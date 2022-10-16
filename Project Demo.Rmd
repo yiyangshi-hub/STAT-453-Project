@@ -12,7 +12,72 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(readr)
 library(survival)
+library(dplyr)
+library(randomForestSRC)
 
 IBM_Attrition <- read.csv("https://raw.githubusercontent.com/yiyangshi-hub/STAT-453-Project/main/IBM_Attrition.csv")
+colnames(IBM_Attrition)[1] = "age"
+IBM_Attrition$Attrition<-ifelse(IBM_Attrition$Attrition=="Yes",1,0)
+IBM_Attrition <- IBM_Attrition %>% 
+  select(-Over18, -OverTime) %>% 
+  mutate(BusinessTravel = factor(BusinessTravel),
+         Department = factor(Department),
+         EducationField = factor(EducationField),
+         Gender = factor(Gender),
+         JobRole = factor(JobRole),
+         MaritalStatus = factor(MaritalStatus),
+         PerformanceRating = factor(PerformanceRating),
+         StockOptionLevel = factor(StockOptionLevel),
+         WorkLifeBalance = factor(WorkLifeBalance))
+```
+
+```{r}
+IBM.obj <- rfsrc(Surv(YearsAtCompany,Attrition) ~ ., IBM_Attrition, 
+                 ntree = 1000, nodesize = 10, nsplit = 50, importance = TRUE)
+
+plot(get.tree(IBM.obj, 3))
+print(IBM.obj)
+```
+
+```{r}
+get.cindex(IBM.obj$yvar[,1], IBM.obj$yvar[,2], IBM.obj$predicted.oob)
+```
+
+```{r}
+IBM_rsf <- IBM_Attrition %>% 
+  sapply(unclass)
+
+newdata <- data.frame(lapply(1:ncol(IBM_rsf),function(i){median(IBM_rsf[,i])}))
+colnames(newdata) <- colnames(IBM_rsf)
+
+newdata1[,which(colnames(IBM_rsf) == "age")] <- quantile(IBM_rsf[,1], 0.25)
+newdata2[,which(colnames(IBM_rsf) == "age")] <- quantile(IBM_rsf[,1], 0.75)
+newdata <- rbind(newdata1,newdata2)
+y.pred <- predict(IBM.obj,newdata = newdata)
+
+plot(y.pred$survival[1,], type="l", xlab="Time (Year)",   
+     ylab="Survival", col=1, lty=1, lwd=2)
+lines(y.pred$survival[2,], col=2)
+legend("topright", legend=c("Age = 30","Age = 43"), col=c(1:2), cex=1, lwd=1)
+```
+
+
+```{r}
+bs.km <- get.brier.survival(IBM.obj, cens.mode = "km")$brier.score
+bs.rsf <- get.brier.survival(IBM.obj, cens.mode = "rfsrc")$brier.score
+
+## plot the brier score
+plot(bs.km, type = "s", col = 2)
+lines(bs.rsf, type ="s", col = 4)
+legend("bottomright", legend = c("cens.model = km", "cens.model = rfsrc"), fill = c(2,4))
+```
+
+```{r}
+# sub.IBM.obj <- subsample(IBM.obj)
+pdf("VIMPsur.pdf", width = 15, height = 20)
+par(oma = c(0.5, 10, 0.5, 0.5))
+par(cex.axis = 2.0, cex.lab = 2.0, cex.main = 2.0, mar = c(6.0,17,1,1), mgp = c(4, 1, 0))
+plot(IBM.obj, xlab = "Variable Importance (x 100)", cex = 1.2)
+dev.off()
 ```
 
