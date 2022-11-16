@@ -53,6 +53,7 @@ IBM_rsf <- IBM_Attrition %>%
 newdata <- data.frame(lapply(1:ncol(IBM_rsf),function(i){median(IBM_rsf[,i])}))
 colnames(newdata) <- colnames(IBM_rsf)
 
+newdata1 <- newdata2 <- newdata
 newdata1[,which(colnames(IBM_rsf) == "age")] <- quantile(IBM_rsf[,1], 0.25)
 newdata2[,which(colnames(IBM_rsf) == "age")] <- quantile(IBM_rsf[,1], 0.75)
 newdata <- rbind(newdata1,newdata2)
@@ -66,8 +67,8 @@ legend("topright", legend=c("Age = 30","Age = 43"), col=c(1:2), cex=1, lwd=1)
 ```{r}
 # AFT models
 m_weibull <- survreg(Surv(YearsAtCompany,Attrition) ~ ., dist = "weibull", data = IBM_Attrition)
-
-
+m_lnorm <- survreg(Surv(YearsAtCompany, Attrition) ~ ., dist = "lognormal", data = IBM_Attrition)
+m_cox <- coxph(Surv(YearsAtCompany, Attrition) ~ ., data = IBM_Attrition)
 ```
 
 
