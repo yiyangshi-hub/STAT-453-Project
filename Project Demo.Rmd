@@ -66,10 +66,39 @@ legend("topright", legend=c("Age = 30","Age = 43"), col=c(1:2), cex=1, lwd=1)
 ```
 ```{r}
 # AFT models
-m_weibull <- survreg(Surv(YearsAtCompany,Attrition) ~ ., dist = "weibull", data = IBM_Attrition)
+m_weibull <- survreg(Surv(YearsAtCompany, Attrition) ~ ., dist = "weibull", x=TRUE , data = IBM_Attrition)
 m_lnorm <- survreg(Surv(YearsAtCompany, Attrition) ~ ., dist = "lognormal", data = IBM_Attrition)
 m_cox <- coxph(Surv(YearsAtCompany, Attrition) ~ ., data = IBM_Attrition)
 ```
+```{r}
+CoxSnell = function(cs,status,xlim=NULL,ylim=NULL)
+{
+kmcs = survfit( Surv(jitter(cs,amount=(max(cs)-min(cs))/1000),status) ~ 1 )$surv
+
+plot( log(-log(kmcs)) ~ sort(log(cs)) ,
+      xlab="log(Cox-Snell)", ylab="log(-log(S(Cox-Snell)))", xlim=xlim, ylim=ylim )
+
+abline(0,1,col='red')
+}
+```
+
+```{r}
+coef_weibull = as.numeric(coef(m_weibull))
+coef_lnorm = as.numeric(coef(m_lnorm))
+# print(length(coeff))
+data = m_weibull$x
+# dim(data)
+s_weibull = data%*%coef_weibull
+s_lnorm = data %*% coef_lnorm
+# print(s)
+
+CS_weibull = -log( 1-pweibull(IBM_Attrition$YearsAtCompany, shape=1/0.4349123 , scale=exp(s_weibull)   ) )
+CS_lnorm = -log( 1-plnorm(IBM_Attrition$YearsAtCompany, meanlog = s_lnorm , sdlog = 0.689322 ) )
+
+CoxSnell( CS_weibull , IBM_Attrition$Attrition , xlim=c(-10,3))
+CoxSnell( CS_lnorm , IBM_Attrition$Attrition, xlim=c(-10,3))
+```
+
 
 
 ```{r}
