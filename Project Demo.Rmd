@@ -1,6 +1,6 @@
 ---
 title: "Project Demo"
-author: "Yiyang Shi"
+author: "Yiyang Shi & Yeheng Zong"
 date: '2022-10-14'
 output: html_document
 ---
@@ -50,33 +50,93 @@ get.cindex(IBM.obj$yvar[,1], IBM.obj$yvar[,2], IBM.obj$predicted.oob)
 IBM_rsf <- IBM_Attrition %>% 
   sapply(unclass)
 
-newdata <- data.frame(lapply(1:ncol(IBM_rsf),function(i){median(IBM_rsf[,i])}))
-colnames(newdata) <- colnames(IBM_rsf)
+# 1st quantile and 3rd quantile of age survival difference
 
-newdata1 <- newdata2 <- newdata
-newdata1[,which(colnames(IBM_rsf) == "age")] <- quantile(IBM_rsf[,1], 0.25)
-newdata2[,which(colnames(IBM_rsf) == "age")] <- quantile(IBM_rsf[,1], 0.75)
-newdata <- rbind(newdata1,newdata2)
-y.pred <- predict(IBM.obj,newdata = newdata)
+newdata_age <- data.frame(lapply(1:ncol(IBM_rsf),function(i){median(IBM_rsf[,i])}))
+colnames(newdata_age) <- colnames(IBM_rsf)
 
-plot(y.pred$survival[1,], type="l", xlab="Time (Year)",   
+newdata_age1 <- newdata_age2 <- newdata_age
+newdata_age1[,which(colnames(IBM_rsf) == "age")] <- quantile(IBM_rsf[,1], 0.25)
+newdata_age2[,which(colnames(IBM_rsf) == "age")] <- quantile(IBM_rsf[,1], 0.75)
+newdata_age <- rbind(newdata_age1,newdata_age2)
+y.pred_age <- predict(IBM.obj,newdata = newdata_age)
+
+plot(y.pred_age$survival[1,], type="l", xlab="Time (Year)",   
      ylab="Survival", col=1, lty=1, lwd=2)
-lines(y.pred$survival[2,], col=2)
+lines(y.pred_age$survival[2,], col=2)
 legend("topright", legend=c("Age = 30","Age = 43"), col=c(1:2), cex=1, lwd=1)
 ```
 ```{r}
+# 1st quantile and 3rd quantile of distance from home survival difference
+
+newdata_d <- data.frame(lapply(1:ncol(IBM_rsf),function(i){median(IBM_rsf[,i])}))
+colnames(newdata_d) <- colnames(IBM_rsf)
+
+newdata_d1 <- newdata_d2 <- newdata_d
+newdata_d1[,which(colnames(IBM_rsf) == "DistanceFromHome")] <- quantile(IBM_rsf[,6], 0.25)
+newdata_d2[,which(colnames(IBM_rsf) == "DistanceFromHome")] <- quantile(IBM_rsf[,6], 0.75)
+newdata_d <- rbind(newdata_d1,newdata_d2)
+y.pred_d <- predict(IBM.obj,newdata = newdata_d)
+
+plot(y.pred_d$survival[1,], type="l", xlab="Time (Year)",   
+     ylab="Survival", col=1, lty=1, lwd=2,
+     ylim = c(0.85, 1))
+lines(y.pred_d$survival[2,], col=2)
+legend("topright", legend=c("Distance From Home = 2","Distance From Home = 14"), col=c(1:2), cex=1, lwd=1)
+```
+```{r}
+# 1st quantile and 3rd quantile of total working years survival difference
+
+newdata_twy <- data.frame(lapply(1:ncol(IBM_rsf),function(i){median(IBM_rsf[,i])}))
+colnames(newdata_twy) <- colnames(IBM_rsf)
+
+newdata_twy1 <- newdata_twy2 <- newdata_twy
+newdata_twy1[,which(colnames(IBM_rsf) == "TotalWorkingYears")] <- quantile(IBM_rsf[,24], 0.25)
+newdata_twy2[,which(colnames(IBM_rsf) == "TotalWorkingYears")] <- quantile(IBM_rsf[,24], 0.75)
+newdata_twy <- rbind(newdata_twy1,newdata_twy2)
+y.pred_twy <- predict(IBM.obj,newdata = newdata_twy)
+
+plot(y.pred_twy$survival[1,], type="l", xlab="Time (Year)",   
+     ylab="Survival", col=1, lty=1, lwd=2)
+lines(y.pred_twy$survival[2,], col=2)
+legend("topright", legend=c("Total Working Years = 6","Total Working Years = 15"), col=c(1:2), cex=1, lwd=1)
+```
+
+```{r}
+# 1st quantile and 3rd quantile of monthly income survival difference
+
+newdata_mi <- data.frame(lapply(1:ncol(IBM_rsf),function(i){median(IBM_rsf[,i])}))
+colnames(newdata_mi) <- colnames(IBM_rsf)
+
+newdata_mi1 <- newdata_mi2 <- newdata_mi
+newdata_mi1[,which(colnames(IBM_rsf) == "MonthlyIncome")] <- quantile(IBM_rsf[,17], 0.25)
+newdata_mi2[,which(colnames(IBM_rsf) == "MonthlyIncome")] <- quantile(IBM_rsf[,17], 0.75)
+newdata_mi <- rbind(newdata_mi1,newdata_mi2)
+y.pred_mi <- predict(IBM.obj,newdata = newdata_mi)
+
+plot(y.pred_mi$survival[1,], type="l", xlab="Time (Year)",   
+     ylab="Survival", col=1, lty=1, lwd=2)
+lines(y.pred_mi$survival[2,], col=2)
+legend("topright", legend=c("Monthly Income = 2911","Monthly Income = 8379"), col=c(1:2), cex=1, lwd=1)
+```
+
+
+```{r}
+IBM_AFT <- IBM_Attrition %>% 
+  as.matrix()
 # AFT models
 m_weibull <- survreg(Surv(YearsAtCompany, Attrition) ~ ., dist = "weibull", x=TRUE , data = IBM_Attrition)
 m_lnorm <- survreg(Surv(YearsAtCompany, Attrition) ~ ., dist = "lognormal", data = IBM_Attrition)
 m_cox <- coxph(Surv(YearsAtCompany, Attrition) ~ ., data = IBM_Attrition)
 ```
 ```{r}
-CoxSnell = function(cs,status,xlim=NULL,ylim=NULL)
+CoxSnell = function(cs,status,xlim=NULL,ylim=NULL, main = NULL)
 {
 kmcs = survfit( Surv(jitter(cs,amount=(max(cs)-min(cs))/1000),status) ~ 1 )$surv
 
 plot( log(-log(kmcs)) ~ sort(log(cs)) ,
-      xlab="log(Cox-Snell)", ylab="log(-log(S(Cox-Snell)))", xlim=xlim, ylim=ylim )
+      xlab="log(Cox-Snell)", ylab="log(-log(S(Cox-Snell)))", 
+      xlim=xlim, ylim=ylim, main = main )
 
 abline(0,1,col='red')
 }
@@ -95,10 +155,19 @@ s_lnorm = data %*% coef_lnorm
 CS_weibull = -log( 1-pweibull(IBM_Attrition$YearsAtCompany, shape=1/0.4349123 , scale=exp(s_weibull)   ) )
 CS_lnorm = -log( 1-plnorm(IBM_Attrition$YearsAtCompany, meanlog = s_lnorm , sdlog = 0.689322 ) )
 
-CoxSnell( CS_weibull , IBM_Attrition$Attrition , xlim=c(-10,3))
-CoxSnell( CS_lnorm , IBM_Attrition$Attrition, xlim=c(-10,3))
+CoxSnell( CS_weibull , IBM_Attrition$Attrition , xlim=c(-10,3), 
+          main = "Cox-Snell Residuals of Weibull Model")
+CoxSnell( CS_lnorm , IBM_Attrition$Attrition, xlim=c(-10,3),
+          main = "Cox-Snell Residuals of Lognormal Model")
 ```
 
+```{r}
+# m_cox$coefficients <- as.numeric(m_cox$coefficients)
+
+plot( cox.zph(m_cox) )
+
+cox.zph( m_cox )
+```
 
 
 ```{r}
