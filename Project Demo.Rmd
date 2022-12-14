@@ -164,9 +164,9 @@ CoxSnell( CS_lnorm , IBM_Attrition$Attrition, xlim=c(-10,3),
 ```{r}
 # m_cox$coefficients <- as.numeric(m_cox$coefficients)
 
-plot( cox.zph(m_cox) )
-
-cox.zph( m_cox )
+# plot( cox.zph(m_cox) )
+# 
+# cox.zph( m_cox )
 ```
 
 
